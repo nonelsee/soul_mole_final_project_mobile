@@ -1,0 +1,88 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ui_bg"
+    android:paddingBottom="20dp">
+
+    <!-- Canvas để vẽ nhân vật -->
+    <com.example.soulmole.view.GameView
+        android:id="@+id/gameView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/controlLayout"
+        android:layout_marginBottom="20dp"/>
+
+    <!-- Bố cục ngang chứa hai phần: các nút điều khiển và nút Dig -->
+    <LinearLayout
+        android:id="@+id/controlLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="20dp">
+
+        <!-- Phần chứa 4 nút điều khiển -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <!-- Nút lên nằm ở giữa -->
+            <Button
+                android:id="@+id/buttonUp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_up_arrow"
+                android:layout_marginBottom="10dp"/>
+
+            <!-- Hàng ngang chứa các nút trái, xuống và phải -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <!-- Nút trái -->
+                <Button
+                    android:id="@+id/buttonLeft"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/ic_left_arrow" />
+
+                <!-- Nút xuống -->
+                <Button
+                    android:id="@+id/buttonDown"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/ic_down_arrow" />
+
+                <!-- Nút phải -->
+                <Button
+                    android:id="@+id/buttonRight"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/ic_right_arrow" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Phần chứa nút Dig -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center">
+
+            <!-- Nút Dig -->
+            <Button
+                android:id="@+id/buttonDig"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/ic_dig"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>
