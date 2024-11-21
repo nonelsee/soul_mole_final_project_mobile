@@ -12,7 +12,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
     companion object {
         private const val DATABASE_NAME = "game_database.db"
-        private const val DATABASE_VERSION = 7
+        private const val DATABASE_VERSION = 9
 
         const val TABLE_PLAYER = "Player"
         const val COLUMN_PLAYER_ID = "player_id"
@@ -23,8 +23,6 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
 
         const val TABLE_GAME_SESSIONS = "game_sessions"
         const val COLUMN_SESSION_ID = "sessionId"
-        const val COLUMN_FINAL_SCORE = "finalScore"
-        const val COLUMN_DISTANCE_DUG = "distanceDug"
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -43,9 +41,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             CREATE TABLE $TABLE_GAME_SESSIONS (
                 $COLUMN_SESSION_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_PLAYER_ID INTEGER,
-                $COLUMN_FINAL_SCORE INTEGER,
-                $COLUMN_DISTANCE_DUG INTEGER,
-                FOREIGN KEY($COLUMN_PLAYER_ID) REFERENCES $TABLE_PLAYER($COLUMN_PLAYER_ID)
+                $COLUMN_SCORE INTEGER,
+                $COLUMN_DEPTH INTEGER,
+                FOREIGN KEY($COLUMN_PLAYER_ID) REFERENCES $TABLE_PLAYER($COLUMN_PLAYER_ID),
+                FOREIGN KEY($COLUMN_SCORE) REFERENCES $TABLE_PLAYER($COLUMN_SCORE),
+                FOREIGN KEY($COLUMN_DEPTH) REFERENCES $TABLE_PLAYER($COLUMN_DEPTH)
             )
         """.trimIndent()
         db.execSQL(createGameSessionsTable)
@@ -55,6 +55,16 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db.execSQL("DROP TABLE IF EXISTS $TABLE_PLAYER")
         db.execSQL("DROP TABLE IF EXISTS $TABLE_GAME_SESSIONS")
         onCreate(db)
+    }
+
+    fun insertGameSession(gameSession: GameSession): Long {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_PLAYER_ID, gameSession.player.playerId)
+            put(COLUMN_SCORE, gameSession.player.score)
+            put(COLUMN_DEPTH, gameSession.player.depth)
+        }
+        return db.insert(TABLE_GAME_SESSIONS, null, values)
     }
 
     fun deleteAllPlayers(): Int {
@@ -103,20 +113,20 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         val topPlayers = mutableListOf<Pair<String, Int>>()
         val db = readableDatabase
 
-        // Truy vấn top 5 người chơi dựa trên finalScore và player_id
+        // Cập nhật query để sử dụng COLUMN_SCORE thay vì COLUMN_FINAL_SCORE
         val query = """
-        SELECT P.$COLUMN_USERNAME, GS.$COLUMN_FINAL_SCORE
-        FROM $TABLE_GAME_SESSIONS GS
-        INNER JOIN $TABLE_PLAYER P ON GS.$COLUMN_PLAYER_ID = P.$COLUMN_PLAYER_ID
-        ORDER BY GS.$COLUMN_FINAL_SCORE DESC, P.$COLUMN_PLAYER_ID ASC
-        LIMIT 5
-    """
+            SELECT P.$COLUMN_USERNAME, GS.$COLUMN_SCORE
+            FROM $TABLE_GAME_SESSIONS GS
+            INNER JOIN $TABLE_PLAYER P ON GS.$COLUMN_PLAYER_ID = P.$COLUMN_PLAYER_ID
+            ORDER BY GS.$COLUMN_SCORE DESC, P.$COLUMN_PLAYER_ID ASC
+            LIMIT 5
+        """
         val cursor = db.rawQuery(query, null)
         if (cursor.moveToFirst()) {
             do {
                 val username = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_USERNAME))
-                val finalScore = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_FINAL_SCORE))
-                topPlayers.add(Pair(username, finalScore))
+                val score = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_SCORE))
+                topPlayers.add(Pair(username, score))
             } while (cursor.moveToNext())
         }
         cursor.close()

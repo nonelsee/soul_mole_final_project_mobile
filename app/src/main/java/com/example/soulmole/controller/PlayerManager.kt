@@ -1,4 +1,4 @@
-package com.example.soulmole.dao
+package com.example.soulmole.controller
 
 import android.os.Handler
 import com.example.soulmole.model.Block
@@ -6,10 +6,12 @@ import com.example.soulmole.model.BlockType
 import com.example.soulmole.model.Player
 import com.example.soulmole.view.GameView
 
-class PlayerDAO(private var gameView: GameView, val player: Player) {
-
+class PlayerManager(private var gameView: GameView, val player: Player) {
     private val healthHandler = Handler()
     var onPlayerHealthDepleted: (() -> Unit)? = null
+    private val initialRow = ((gameView.maxY - gameView.playerY - gameView.pixelSize) / gameView.blockSize).toInt()
+    var isMovingUp = false  // Cờ kiểm tra di chuyển lên
+    var freezeRow = -1
 
     // Hàm giảm máu
     val healthDecrementRunnable = object : Runnable {
@@ -17,7 +19,7 @@ class PlayerDAO(private var gameView: GameView, val player: Player) {
             if (player.health > 0) {
                 player.health--
                 gameView.drawGame(gameView.holder) // Yêu cầu vẽ lại GameView
-                healthHandler.postDelayed(this, 500)  // Giảm máu mỗi 1/3 giây
+                healthHandler.postDelayed(this, 500)  // Giảm máu mỗi 1/2 giây
             } else {
                 healthHandler.removeCallbacks(this)
                 onPlayerHealthDepleted?.invoke()  // Gọi callback khi máu về 0
@@ -34,6 +36,9 @@ class PlayerDAO(private var gameView: GameView, val player: Player) {
 
         if (targetRow in gameView.blocks.indices && targetCol in gameView.blocks[targetRow].indices) {
             val targetBlock = gameView.blocks[targetRow][targetCol]
+            if (targetBlock.type == BlockType.STONE) {
+                return
+            }
             if (targetBlock.type != BlockType.EMPTY) {
                 // Đào block
                 targetBlock.hitsRemaining -= 1
@@ -48,7 +53,6 @@ class PlayerDAO(private var gameView: GameView, val player: Player) {
     }
 
 
-    // Hàm di chuyển người chơi
     fun movePlayer(dx: Float, dy: Float) {
         val col = (gameView.playerX / gameView.blockSize).toInt()
         val row = ((gameView.maxY - gameView.playerY - gameView.pixelSize) / gameView.blockSize).toInt()
@@ -56,19 +60,33 @@ class PlayerDAO(private var gameView: GameView, val player: Player) {
         val newX = gameView.playerX + dx * gameView.blockSize
         val newY = gameView.playerY + dy * gameView.blockSize
 
-        // Kiểm tra va chạm với các khối không phải EMPTY khi di chuyển theo chiều Y
-        if (dy > 0) { // Di chuyển xuống
+        if (dy < 0 && row >= initialRow) {
+            return  // Không cho phép di chuyển lên trên hàng khởi tạo
+        }
+
+        if (dy < 0) {  // Di chuyển lên
+            if (!isMovingUp) {
+                // Bắt đầu đi lên, lưu lại hàng hiện tại làm mốc dừng tính điểm
+                isMovingUp = true
+                freezeRow = row
+            }
+        } else if (dy > 0) {  // Di chuyển xuống
             val rowBelow = row - 1
             if (rowBelow >= 0 && rowBelow < gameView.blocks.size &&
                 col in gameView.blocks[rowBelow].indices &&
                 gameView.blocks[rowBelow][col].type != BlockType.EMPTY) {
                 return
             }
-        } else if (dy < 0) { // Di chuyển lên
-            val rowAbove = row + 1
-            if (rowAbove < gameView.blocks.size && col in gameView.blocks[rowAbove].indices &&
-                gameView.blocks[rowAbove][col].type != BlockType.EMPTY) {
-                return
+
+            // Kiểm tra nếu người chơi đã di chuyển xuống qua hàng freezeRow
+            if (isMovingUp && row <= freezeRow) {
+                isMovingUp = false  // Reset cờ khi người chơi đã di chuyển xuống qua hàng freezeRow
+            }
+
+            // Chỉ tính điểm khi người chơi không đang di chuyển lên
+            if (!isMovingUp) {
+                player.depth += 5
+                player.score += 20
             }
         }
 
@@ -93,11 +111,6 @@ class PlayerDAO(private var gameView: GameView, val player: Player) {
         }
         if (newY in gameView.minY..(gameView.maxY - gameView.blockSize)) {
             gameView.playerY = newY
-            // Chỉ cập nhật độ sâu và điểm số khi di chuyển xuống hợp lệ
-            if (dy > 0) {
-                player.depth += 5
-                player.score += 20
-            }
         }
 
         gameView.drawGame(gameView.holder)

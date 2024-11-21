@@ -1,6 +1,8 @@
 package com.example.soulmole.activity
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.EditText
@@ -21,6 +23,11 @@ class GameActivity : AppCompatActivity() {
     private lateinit var gameView: GameView
     lateinit var player: Player
 
+    private lateinit var buttonUp: Button
+    private lateinit var buttonDown: Button
+    private lateinit var buttonLeft: Button
+    private lateinit var buttonRight: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game)
@@ -31,50 +38,91 @@ class GameActivity : AppCompatActivity() {
         showNameInputDialog()
 
         val buttonDig = findViewById<Button>(R.id.buttonDig)
-        val buttonUp = findViewById<Button>(R.id.buttonUp)
-        val buttonDown = findViewById<Button>(R.id.buttonDown)
-        val buttonLeft = findViewById<Button>(R.id.buttonLeft)
-        val buttonRight = findViewById<Button>(R.id.buttonRight)
+        buttonUp = findViewById(R.id.buttonUp)
+        buttonDown = findViewById(R.id.buttonDown)
+        buttonLeft = findViewById(R.id.buttonLeft)
+        buttonRight = findViewById(R.id.buttonRight)
 
-        // Bật chế độ dig khi nhấn nút dig
+        // Handler để kiểm tra stone blocks định kỳ
+        val handler = Handler(Looper.getMainLooper())
+        val updateButtonsRunnable = object : Runnable {
+            override fun run() {
+                updateButtonStates()
+                handler.postDelayed(this, 100) // Kiểm tra mỗi 100ms
+            }
+        }
+        handler.post(updateButtonsRunnable)
+
         buttonDig.setOnClickListener {
             isDigMode = true
         }
 
         buttonUp.setOnClickListener {
             if (isDigMode) {
-                gameView.digBlock(0, -1)  // Đào block ở trên
+                gameView.digBlock(0, -1)
+                updateButtonStates()
             } else {
-                gameView.movePlayer(0f, -1f)  // Di chuyển lên
+                gameView.movePlayer(0f, -1f)
             }
             isDigMode = false
+            updateButtonStates()
         }
 
         buttonDown.setOnClickListener {
             if (isDigMode) {
-                gameView.digBlock(0, 1)  // Đào block ở dưới
+                gameView.digBlock(0, 1)
+                updateButtonStates()
             } else {
-                gameView.movePlayer(0f, 1f)  // Di chuyển xuống
+                gameView.movePlayer(0f, 1f)
             }
             isDigMode = false
+            updateButtonStates()
         }
 
         buttonLeft.setOnClickListener {
             if (isDigMode) {
-                gameView.digBlock(-1, 0)  // Đào block bên trái
+                gameView.digBlock(-1, 0)
+                updateButtonStates()
             } else {
-                gameView.movePlayer(-1f, 0f)  // Di chuyển sang trái
+                gameView.movePlayer(-1f, 0f)
             }
             isDigMode = false
+            updateButtonStates()
         }
 
         buttonRight.setOnClickListener {
             if (isDigMode) {
-                gameView.digBlock(1, 0)  // Đào block bên phải
+                gameView.digBlock(1, 0)
+                updateButtonStates()
             } else {
-                gameView.movePlayer(1f, 0f)  // Di chuyển sang phải
+                gameView.movePlayer(1f, 0f)
             }
             isDigMode = false
+            updateButtonStates()
+        }
+    }
+
+    private fun updateButtonStates() {
+        val stoneDirections = gameView.checkStoneBlocks()
+
+        buttonUp.apply {
+            isEnabled = !stoneDirections["up"]!!
+            alpha = if (isEnabled) 1.0f else 0.2f
+        }
+
+        buttonDown.apply {
+            isEnabled = !stoneDirections["down"]!!
+            alpha = if (isEnabled) 1.0f else 0.2f
+        }
+
+        buttonLeft.apply {
+            isEnabled = !stoneDirections["left"]!!
+            alpha = if (isEnabled) 1.0f else 0.2f
+        }
+
+        buttonRight.apply {
+            isEnabled = !stoneDirections["right"]!!
+            alpha = if (isEnabled) 1.0f else 0.2f
         }
     }
 
@@ -108,7 +156,7 @@ class GameActivity : AppCompatActivity() {
 
                             // Khởi tạo gameView với player sau khi tên đã nhập
                             gameView.initializePlayer(player)
-                            gameView.playerDAO.onPlayerHealthDepleted = { showGameOverDialog() }
+                            gameView.playerManager.onPlayerHealthDepleted = { showGameOverDialog() }
 
                             dialog.dismiss()
                         } else {
@@ -128,27 +176,21 @@ class GameActivity : AppCompatActivity() {
         }
         dialog.show()
     }
-
     private fun showGameOverDialog() {
-        val score = player.score
-        val depth = player.depth
-
         val gameSession = GameSession(
-            playerId = player.playerId,
-            finalScore = score,
-            distanceDug = depth
+            player = player  // Truyền trực tiếp đối tượng player hiện tại
         )
 
         val gameSessionDAO = GameSessionDAO(dbHelper)
         gameSessionDAO.insertGameSession(gameSession)
-        // Hiển thị thông báo với điểm số và độ sâu
+
         runOnUiThread {
             AlertDialog.Builder(this)
                 .setTitle("Game Over")
-                .setMessage("Score: $score\nDepth: $depth")
+                .setMessage("Score: ${gameSession.player.score}\nDepth: ${gameSession.player.depth}")
                 .setPositiveButton("OK") { dialog, _ ->
                     dialog.dismiss()
-                    finish()  // Kết thúc GameActivity và quay lại màn hình chính hoặc làm điều gì đó khác
+                    finish()
                 }
                 .setCancelable(false)
                 .show()

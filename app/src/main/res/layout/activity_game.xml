@@ -1,8 +1,9 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/ui_bg"
-    android:paddingBottom="20dp">
+    android:background="@drawable/new_bgimg"
+    android:paddingBottom="0dp">
 
     <!-- Canvas để vẽ nhân vật -->
     <com.example.soulmole.view.GameView
@@ -10,9 +11,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/controlLayout"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginBottom="20dp" />
 
-    <!-- Bố cục ngang chứa hai phần: các nút điều khiển và nút Dig -->
+    <!-- Bố cục ngang chứa các nút điều khiển và nút Dig -->
     <LinearLayout
         android:id="@+id/controlLayout"
         android:layout_width="match_parent"
@@ -22,51 +23,52 @@
         android:gravity="center"
         android:layout_marginBottom="20dp">
 
-        <!-- Phần chứa 4 nút điều khiển -->
-        <LinearLayout
+        <!-- Phần chứa các nút điều khiển, chuyển sang ConstraintLayout để điều chỉnh khoảng cách -->
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
+            android:layout_weight="1">
 
-            <!-- Nút lên nằm ở giữa -->
+            <!-- Nút lên -->
             <Button
                 android:id="@+id/buttonUp"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:background="@drawable/ic_up_arrow"
-                android:layout_marginBottom="10dp"/>
+                app:layout_constraintBottom_toTopOf="@id/buttonLeft"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- Hàng ngang chứa các nút trái, xuống và phải -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+            <!-- Nút trái -->
+            <Button
+                android:id="@+id/buttonLeft"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/ic_left_arrow"
+                app:layout_constraintEnd_toStartOf="@id/buttonRight"
+                app:layout_constraintTop_toBottomOf="@id/buttonUp"
+                app:layout_constraintStart_toStartOf="parent" />
 
-                <!-- Nút trái -->
-                <Button
-                    android:id="@+id/buttonLeft"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:background="@drawable/ic_left_arrow" />
+            <!-- Nút phải -->
+            <Button
+                android:id="@+id/buttonRight"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/ic_right_arrow"
+                app:layout_constraintStart_toEndOf="@id/buttonLeft"
+                app:layout_constraintTop_toBottomOf="@id/buttonUp"
+                app:layout_constraintEnd_toEndOf="parent" />
 
-                <!-- Nút xuống -->
-                <Button
-                    android:id="@+id/buttonDown"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:background="@drawable/ic_down_arrow" />
-
-                <!-- Nút phải -->
-                <Button
-                    android:id="@+id/buttonRight"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:background="@drawable/ic_right_arrow" />
-            </LinearLayout>
-        </LinearLayout>
+            <!-- Nút xuống -->
+            <Button
+                android:id="@+id/buttonDown"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/ic_down_arrow"
+                app:layout_constraintTop_toBottomOf="@id/buttonLeft"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- Phần chứa nút Dig -->
         <LinearLayout
@@ -78,9 +80,9 @@
             <!-- Nút Dig -->
             <Button
                 android:id="@+id/buttonDig"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:background="@drawable/ic_dig"/>
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/ic_dig" />
         </LinearLayout>
 
     </LinearLayout>
